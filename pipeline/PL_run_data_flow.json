@@ -23,7 +23,7 @@
 						"referenceName": "DataFlowintegrationRuntime",
 						"type": "IntegrationRuntimeReference"
 					},
-					"traceLevel": "Fine"
+					"traceLevel": "Coarse"
 				}
 			}
 		],
