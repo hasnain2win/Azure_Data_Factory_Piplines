@@ -1,0 +1,38 @@
+{
+	"name": "df_dataflow_sales_data",
+	"properties": {
+		"folder": {
+			"name": "df_flows"
+		},
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "ds_df_sales_drive_inputs",
+						"type": "DatasetReference"
+					},
+					"name": "salesData"
+				}
+			],
+			"sinks": [],
+			"transformations": [],
+			"scriptLines": [
+				"source(output(",
+				"          Order_id as string,",
+				"          Country as string,",
+				"          Year as string,",
+				"          Sales as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     inferDriftedColumnTypes: true,",
+				"     ignoreNoFilesFound: false,",
+				"     partitionBy('key',",
+				"          0,",
+				"          ERROR_FUNCTION('')",
+				"     )) ~> salesData"
+			]
+		}
+	}
+}
