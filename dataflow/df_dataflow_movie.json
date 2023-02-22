@@ -78,7 +78,7 @@
 				"sortByRating sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     format: 'parquet',",
-				"     partitionFileNames:[''],",
+				"     partitionFileNames:['faimly_movie'],",
 				"     umask: 0022,",
 				"     preCommands: [],",
 				"     postCommands: [],",
