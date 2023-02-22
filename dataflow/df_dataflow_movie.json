@@ -1,0 +1,85 @@
+{
+	"name": "df_dataflow_movie",
+	"properties": {
+		"folder": {
+			"name": "df_flows"
+		},
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "ds_movie_input",
+						"type": "DatasetReference"
+					},
+					"name": "faimlyMovie"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "ds_movie_output_parquet",
+						"type": "DatasetReference"
+					},
+					"name": "movieSink"
+				}
+			],
+			"transformations": [
+				{
+					"name": "moviedata"
+				},
+				{
+					"name": "sortByMovieName"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          movie_id as string,",
+				"          movie_name as string,",
+				"          year as string,",
+				"          certificate as string,",
+				"          runtime as string,",
+				"          genre as string,",
+				"          rating as double,",
+				"          description as string,",
+				"          director as string,",
+				"          director_id as string,",
+				"          star as string,",
+				"          star_id as string,",
+				"          votes as string,",
+				"          {gross(in $)} as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     inferDriftedColumnTypes: true,",
+				"     ignoreNoFilesFound: false) ~> faimlyMovie",
+				"faimlyMovie select(mapColumn(",
+				"          movie_id,",
+				"          movie_name,",
+				"          year,",
+				"          certificate,",
+				"          genre,",
+				"          rating,",
+				"          description,",
+				"          director,",
+				"          director_id,",
+				"          star,",
+				"          star_id,",
+				"          votes,",
+				"          {gross(in $)}",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> moviedata",
+				"moviedata sort(asc(movie_name, true)) ~> sortByMovieName",
+				"sortByMovieName sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     format: 'parquet',",
+				"     umask: 0022,",
+				"     preCommands: [],",
+				"     postCommands: [],",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> movieSink"
+			]
+		}
+	}
+}
