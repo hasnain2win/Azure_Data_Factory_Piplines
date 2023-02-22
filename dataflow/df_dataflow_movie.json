@@ -29,7 +29,10 @@
 					"name": "moviedata"
 				},
 				{
-					"name": "sortByMovieName"
+					"name": "sortByRating"
+				},
+				{
+					"name": "filterByRating"
 				}
 			],
 			"scriptLines": [
@@ -70,8 +73,9 @@
 				"     ),",
 				"     skipDuplicateMapInputs: true,",
 				"     skipDuplicateMapOutputs: true) ~> moviedata",
-				"moviedata sort(asc(movie_name, true)) ~> sortByMovieName",
-				"sortByMovieName sink(allowSchemaDrift: true,",
+				"filterByRating sort(asc(rating, false)) ~> sortByRating",
+				"moviedata filter(rating>=5) ~> filterByRating",
+				"sortByRating sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     format: 'parquet',",
 				"     umask: 0022,",
