@@ -18,7 +18,7 @@
 			"sinks": [
 				{
 					"dataset": {
-						"referenceName": "ds_movie_output_parquet",
+						"referenceName": "ds_movie_output_csv",
 						"type": "DatasetReference"
 					},
 					"name": "movieSink"
@@ -77,14 +77,14 @@
 				"moviedata filter(rating>=5) ~> filterByRating",
 				"sortByRating sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
-				"     format: 'parquet',",
 				"     partitionFileNames:['faimly_movie'],",
 				"     umask: 0022,",
 				"     preCommands: [],",
 				"     postCommands: [],",
 				"     skipDuplicateMapInputs: true,",
 				"     skipDuplicateMapOutputs: true,",
-				"     partitionBy('hash', 1)) ~> movieSink"
+				"     partitionBy('hash', 1),",
+				"     format: 'parquet') ~> movieSink"
 			]
 		}
 	}
