@@ -69,7 +69,7 @@
 				"          star,",
 				"          star_id,",
 				"          votes,",
-				"          {gross(in $)}",
+				"          {gross in USD} = {gross(in $)}",
 				"     ),",
 				"     skipDuplicateMapInputs: true,",
 				"     skipDuplicateMapOutputs: true) ~> moviedata",
