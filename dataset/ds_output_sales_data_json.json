@@ -1,0 +1,19 @@
+{
+	"name": "ds_output_sales_data_json",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "AzureDataLakeStorage1",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "Json",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"folderPath": "filterJsonFiles",
+				"fileSystem": "hasnain"
+			}
+		},
+		"schema": {}
+	}
+}
