@@ -1,0 +1,10 @@
+{
+	"name": "mgprivateEndpoint",
+	"properties": {
+		"privateLinkResourceId": "/subscriptions/adc2a681-05ac-43c7-88b8-3e16517bb308/resourceGroups/hasnainPR/providers/Microsoft.Sql/servers/azuresqlserver001",
+		"groupId": "sqlServer",
+		"fqdns": [
+			"azuresqlserver001.database.windows.net"
+		]
+	}
+}

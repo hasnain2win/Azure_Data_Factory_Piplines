@@ -1,0 +1,9 @@
+{
+	"name": "hasnain2azuredatafactory",
+	"location": "centralindia",
+	"identity": {
+		"type": "SystemAssigned",
+		"principalId": "79655593-c314-43d3-8d14-b8c4e707ac94",
+		"tenantId": "13085c86-4bcb-460a-a6f0-b373421c6323"
+	}
+}
