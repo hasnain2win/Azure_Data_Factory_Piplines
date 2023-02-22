@@ -16,7 +16,7 @@
 				"userProperties": [],
 				"typeProperties": {
 					"dataflow": {
-						"referenceName": "df_dataflow_sales_data",
+						"referenceName": "df_dataflow_movie",
 						"type": "DataFlowReference"
 					},
 					"integrationRuntime": {
