@@ -802,12 +802,14 @@
 						"userProperties": [],
 						"typeProperties": {
 							"dataflow": {
-								"referenceName": "df_crif_dataflow",
+								"referenceName": "df_crif_dataflow_split_data",
 								"type": "DataFlowReference",
 								"parameters": {},
 								"datasetParameters": {
 									"CRIF": {},
-									"OWNERSHIP": {}
+									"Individual": {},
+									"Joint": {},
+									"Guarantor": {}
 								}
 							},
 							"staging": {},
@@ -826,7 +828,7 @@
 				"annotations": []
 			},
 			"dependsOn": [
-				"[concat(variables('factoryId'), '/dataflows/df_crif_dataflow')]",
+				"[concat(variables('factoryId'), '/dataflows/df_crif_dataflow_split_data')]",
 				"[concat(variables('factoryId'), '/integrationRuntimes/AutoResolveIntegrationRuntime')]"
 			]
 		},
@@ -2092,7 +2094,7 @@
 						"     skipDuplicateMapOutputs: true) ~> select3",
 						"select2 sink(allowSchemaDrift: true,",
 						"     validateSchema: false,",
-						"     partitionFileNames:['Individual'],",
+						"     partitionFileNames:['Individual.csv'],",
 						"     umask: 0022,",
 						"     preCommands: [],",
 						"     postCommands: [],",
@@ -2101,7 +2103,7 @@
 						"     partitionBy('hash', 1)) ~> Individual",
 						"select1 sink(allowSchemaDrift: true,",
 						"     validateSchema: false,",
-						"     partitionFileNames:['Joint'],",
+						"     partitionFileNames:['Joint.csv'],",
 						"     umask: 0022,",
 						"     preCommands: [],",
 						"     postCommands: [],",
@@ -2110,7 +2112,7 @@
 						"     partitionBy('hash', 1)) ~> Joint",
 						"select3 sink(allowSchemaDrift: true,",
 						"     validateSchema: false,",
-						"     partitionFileNames:['Guarantor'],",
+						"     partitionFileNames:['Guarantor.csv'],",
 						"     umask: 0022,",
 						"     preCommands: [],",
 						"     postCommands: [],",
