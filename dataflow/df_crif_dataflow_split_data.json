@@ -1,0 +1,86 @@
+{
+	"name": "df_crif_dataflow_split_data",
+	"properties": {
+		"folder": {
+			"name": "df_flows"
+		},
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "ds_CRIF_data_input",
+						"type": "DatasetReference"
+					},
+					"name": "CRIF"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "ds_crif_output_json",
+						"type": "DatasetReference"
+					},
+					"name": "OWNERSHIP"
+				}
+			],
+			"transformations": [
+				{
+					"name": "split1"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          RESPONSES as string,",
+				"          RESPONSE as string,",
+				"          {LOAN-DETAILS} as string,",
+				"          {ACCT-NUMBER} as string,",
+				"          {CREDIT-GUARANTOR} as string,",
+				"          {ACCT-TYPE} as string,",
+				"          {DATE-REPORTED} as date,",
+				"          {OWNERSHIP-IND} as string,",
+				"          {ACCOUNT-STATUS} as string,",
+				"          {DISBURSED-AMT} as integer,",
+				"          {DISBURSED-DT} as date,",
+				"          {CLOSED-DATE} as date,",
+				"          {INSTALLMENT-AMT} as string,",
+				"          {WRITE-OFF-AMT} as boolean,",
+				"          {CURRENT-BAL} as integer,",
+				"          {COMBINED-PAYMENT-HISTORY} as string,",
+				"          {MATCHED-TYPE} as string,",
+				"          {LINKED-ACCOUNTS} as string,",
+				"          {PRINCIPAL-WRITE-OFF-AMT} as boolean,",
+				"          {SECURITY-DETAILS} as string,",
+				"          {SECURITY-DETAIL} as string,",
+				"          {SECURITY-TYPE} as string,",
+				"          {OWNER-NAME} as short,",
+				"          {SECURITY-VALUE} as integer,",
+				"          {SECURITY-CHARGE} as string,",
+				"          {PROPERTY-ADDRESS} as string,",
+				"          {SETTLEMENT-AMT} as boolean,",
+				"          {LAST-PAYMENT-DATE} as date,",
+				"          {OVERDUE-AMT} as boolean,",
+				"          {SUIT-FILED_WILFUL-DEFAULT} as string,",
+				"          {WRITTEN-OFF_SETTLED-STATUS} as string,",
+				"          {ACTUAL-PAYMENT} as integer",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false) ~> CRIF",
+				"CRIF split({OWNERSHIP-IND}=='Individual',",
+				"     {OWNERSHIP-IND}=='Joint',",
+				"     {OWNERSHIP-IND}=='Guarantor',",
+				"     disjoint: false) ~> split1@(Individual, Joint, Guarantor)",
+				"split1@Individual sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     partitionFileNames:['crifFilteredData'],",
+				"     umask: 0022,",
+				"     preCommands: [],",
+				"     postCommands: [],",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     partitionBy('hash', 1)) ~> OWNERSHIP"
+			]
+		}
+	}
+}
