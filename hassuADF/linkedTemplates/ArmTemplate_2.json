@@ -13,6 +13,33 @@
 	},
 	"resources": [
 		{
+			"name": "[concat(parameters('factoryName'), '/ds_sqltable')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureSqlDatabase1",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"TableName": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": {
+						"value": "@dataset().TableName",
+						"type": "Expression"
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/df_dataflow_movie')]",
 			"type": "Microsoft.DataFactory/factories/dataflows",
 			"apiVersion": "2018-06-01",
@@ -318,7 +345,9 @@
 				"annotations": [],
 				"lastPublishTime": "2023-02-19T12:48:47Z"
 			},
-			"dependsOn": []
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/ds_sqltable')]"
+			]
 		},
 		{
 			"name": "[concat(parameters('factoryName'), '/PL_SQLDB_TO_ADLFGen2')]",
@@ -456,53 +485,6 @@
 			"dependsOn": []
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/PL_run_data_flow')]",
-			"type": "Microsoft.DataFactory/factories/pipelines",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"activities": [
-					{
-						"name": "Data flow for sales data",
-						"type": "ExecuteDataFlow",
-						"dependsOn": [],
-						"policy": {
-							"timeout": "0.12:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"dataflow": {
-								"referenceName": "df_dataflow_movie",
-								"type": "DataFlowReference",
-								"parameters": {},
-								"datasetParameters": {
-									"faimlyMovie": {},
-									"movieSink": {}
-								}
-							},
-							"staging": {},
-							"integrationRuntime": {
-								"referenceName": "DataFlowintegrationRuntime",
-								"type": "IntegrationRuntimeReference"
-							},
-							"traceLevel": "Coarse"
-						}
-					}
-				],
-				"policy": {
-					"elapsedTimeMetric": {},
-					"cancelAfter": {}
-				},
-				"annotations": []
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/dataflows/df_dataflow_movie')]"
-			]
-		},
-		{
 			"name": "[concat(parameters('factoryName'), '/df_crif_dataflow')]",
 			"type": "Microsoft.DataFactory/factories/dataflows",
 			"apiVersion": "2018-06-01",
@@ -580,15 +562,294 @@
 						"          AvrgAmount = avg({DISBURSED-AMT})) ~> ByOWNERSHIPIND",
 						"ByOWNERSHIPIND sink(allowSchemaDrift: true,",
 						"     validateSchema: false,",
+						"     partitionFileNames:['crifFilteredData'],",
 						"     umask: 0022,",
 						"     preCommands: [],",
 						"     postCommands: [],",
 						"     skipDuplicateMapInputs: true,",
-						"     skipDuplicateMapOutputs: true) ~> OWNERSHIP"
+						"     skipDuplicateMapOutputs: true,",
+						"     partitionBy('hash', 1)) ~> OWNERSHIP"
 					]
 				}
 			},
 			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/df_crif_dataflow_split_data')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"folder": {
+					"name": "df_flows"
+				},
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "ds_CRIF_data_input",
+								"type": "DatasetReference"
+							},
+							"name": "CRIF"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "ds_crif_data_ouput",
+								"type": "DatasetReference"
+							},
+							"name": "Individual"
+						},
+						{
+							"dataset": {
+								"referenceName": "ds_crif_data_ouput",
+								"type": "DatasetReference"
+							},
+							"name": "Joint",
+							"rejectedDataLinkedService": {
+								"referenceName": "LS_AzureDataLake_Gen_2",
+								"type": "LinkedServiceReference"
+							}
+						},
+						{
+							"dataset": {
+								"referenceName": "ds_crif_data_ouput",
+								"type": "DatasetReference"
+							},
+							"name": "Guarantor"
+						}
+					],
+					"transformations": [
+						{
+							"name": "split1"
+						},
+						{
+							"name": "select1"
+						},
+						{
+							"name": "select2"
+						},
+						{
+							"name": "select3"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          RESPONSES as string,",
+						"          RESPONSE as string,",
+						"          {LOAN-DETAILS} as string,",
+						"          {ACCT-NUMBER} as string,",
+						"          {CREDIT-GUARANTOR} as string,",
+						"          {ACCT-TYPE} as string,",
+						"          {DATE-REPORTED} as date,",
+						"          {OWNERSHIP-IND} as string,",
+						"          {ACCOUNT-STATUS} as string,",
+						"          {DISBURSED-AMT} as integer,",
+						"          {DISBURSED-DT} as date,",
+						"          {CLOSED-DATE} as date,",
+						"          {INSTALLMENT-AMT} as string,",
+						"          {WRITE-OFF-AMT} as boolean,",
+						"          {CURRENT-BAL} as integer,",
+						"          {COMBINED-PAYMENT-HISTORY} as string,",
+						"          {MATCHED-TYPE} as string,",
+						"          {LINKED-ACCOUNTS} as string,",
+						"          {PRINCIPAL-WRITE-OFF-AMT} as boolean,",
+						"          {SECURITY-DETAILS} as string,",
+						"          {SECURITY-DETAIL} as string,",
+						"          {SECURITY-TYPE} as string,",
+						"          {OWNER-NAME} as short,",
+						"          {SECURITY-VALUE} as integer,",
+						"          {SECURITY-CHARGE} as string,",
+						"          {PROPERTY-ADDRESS} as string,",
+						"          {SETTLEMENT-AMT} as boolean,",
+						"          {LAST-PAYMENT-DATE} as date,",
+						"          {OVERDUE-AMT} as boolean,",
+						"          {SUIT-FILED_WILFUL-DEFAULT} as string,",
+						"          {WRITTEN-OFF_SETTLED-STATUS} as string,",
+						"          {ACTUAL-PAYMENT} as integer",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false) ~> CRIF",
+						"CRIF split({OWNERSHIP-IND}=='Individual',",
+						"     {OWNERSHIP-IND}=='Joint',",
+						"     {OWNERSHIP-IND}=='Guarantor',",
+						"     disjoint: false) ~> split1@(Individual, Joint, Guarantor)",
+						"split1@Joint select(mapColumn(",
+						"          {CREDIT-GUARANTOR},",
+						"          {ACCT-TYPE},",
+						"          {DATE-REPORTED},",
+						"          {OWNERSHIP-IND},",
+						"          {ACCOUNT-STATUS},",
+						"          {DISBURSED-AMT},",
+						"          {DISBURSED-DT},",
+						"          {CLOSED-DATE},",
+						"          {INSTALLMENT-AMT},",
+						"          {WRITE-OFF-AMT},",
+						"          {CURRENT-BAL},",
+						"          {COMBINED-PAYMENT-HISTORY},",
+						"          {MATCHED-TYPE},",
+						"          {LINKED-ACCOUNTS},",
+						"          {PRINCIPAL-WRITE-OFF-AMT},",
+						"          {SECURITY-DETAILS},",
+						"          {SECURITY-DETAIL},",
+						"          {SECURITY-TYPE},",
+						"          {OWNER-NAME},",
+						"          {SECURITY-VALUE},",
+						"          {SECURITY-CHARGE},",
+						"          {PROPERTY-ADDRESS},",
+						"          {SETTLEMENT-AMT},",
+						"          {LAST-PAYMENT-DATE},",
+						"          {OVERDUE-AMT},",
+						"          {SUIT-FILED_WILFUL-DEFAULT},",
+						"          {WRITTEN-OFF_SETTLED-STATUS},",
+						"          {ACTUAL-PAYMENT}",
+						"     ),",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> select1",
+						"split1@Individual select(mapColumn(",
+						"          {CREDIT-GUARANTOR},",
+						"          {ACCT-TYPE},",
+						"          {DATE-REPORTED},",
+						"          {OWNERSHIP-IND},",
+						"          {ACCOUNT-STATUS},",
+						"          {DISBURSED-AMT},",
+						"          {DISBURSED-DT},",
+						"          {CLOSED-DATE},",
+						"          {INSTALLMENT-AMT},",
+						"          {WRITE-OFF-AMT},",
+						"          {CURRENT-BAL},",
+						"          {COMBINED-PAYMENT-HISTORY},",
+						"          {MATCHED-TYPE},",
+						"          {LINKED-ACCOUNTS},",
+						"          {PRINCIPAL-WRITE-OFF-AMT},",
+						"          {SECURITY-DETAILS},",
+						"          {SECURITY-DETAIL},",
+						"          {SECURITY-TYPE},",
+						"          {OWNER-NAME},",
+						"          {SECURITY-VALUE},",
+						"          {SECURITY-CHARGE},",
+						"          {PROPERTY-ADDRESS},",
+						"          {SETTLEMENT-AMT},",
+						"          {LAST-PAYMENT-DATE},",
+						"          {OVERDUE-AMT},",
+						"          {SUIT-FILED_WILFUL-DEFAULT},",
+						"          {WRITTEN-OFF_SETTLED-STATUS},",
+						"          {ACTUAL-PAYMENT}",
+						"     ),",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> select2",
+						"split1@Guarantor select(mapColumn(",
+						"          {CREDIT-GUARANTOR},",
+						"          {ACCT-TYPE},",
+						"          {DATE-REPORTED},",
+						"          {OWNERSHIP-IND},",
+						"          {ACCOUNT-STATUS},",
+						"          {DISBURSED-AMT},",
+						"          {DISBURSED-DT},",
+						"          {CLOSED-DATE},",
+						"          {INSTALLMENT-AMT},",
+						"          {WRITE-OFF-AMT},",
+						"          {CURRENT-BAL},",
+						"          {COMBINED-PAYMENT-HISTORY},",
+						"          {MATCHED-TYPE},",
+						"          {LINKED-ACCOUNTS},",
+						"          {PRINCIPAL-WRITE-OFF-AMT},",
+						"          {SECURITY-DETAILS},",
+						"          {SECURITY-DETAIL},",
+						"          {SECURITY-TYPE},",
+						"          {OWNER-NAME},",
+						"          {SECURITY-VALUE},",
+						"          {SECURITY-CHARGE},",
+						"          {PROPERTY-ADDRESS},",
+						"          {SETTLEMENT-AMT},",
+						"          {LAST-PAYMENT-DATE},",
+						"          {OVERDUE-AMT},",
+						"          {SUIT-FILED_WILFUL-DEFAULT},",
+						"          {WRITTEN-OFF_SETTLED-STATUS},",
+						"          {ACTUAL-PAYMENT}",
+						"     ),",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> select3",
+						"select2 sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     partitionFileNames:['Individual'],",
+						"     umask: 0022,",
+						"     preCommands: [],",
+						"     postCommands: [],",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     partitionBy('hash', 1)) ~> Individual",
+						"select1 sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     partitionFileNames:['Joint'],",
+						"     umask: 0022,",
+						"     preCommands: [],",
+						"     postCommands: [],",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     partitionBy('hash', 1)) ~> Joint",
+						"select3 sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     partitionFileNames:['Guarantor'],",
+						"     umask: 0022,",
+						"     preCommands: [],",
+						"     postCommands: [],",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     partitionBy('hash', 1)) ~> Guarantor"
+					]
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/PL_run_data_flow')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Data flow for sales data",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "df_crif_dataflow",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"CRIF": {},
+									"OWNERSHIP": {}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Coarse"
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {},
+					"cancelAfter": {}
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/dataflows/df_crif_dataflow')]"
+			]
 		}
 	]
 }
