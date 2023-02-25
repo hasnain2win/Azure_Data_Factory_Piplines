@@ -74,11 +74,13 @@
 				"          AvrgAmount = avg({DISBURSED-AMT})) ~> ByOWNERSHIPIND",
 				"ByOWNERSHIPIND sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
+				"     partitionFileNames:[''],",
 				"     umask: 0022,",
 				"     preCommands: [],",
 				"     postCommands: [],",
 				"     skipDuplicateMapInputs: true,",
-				"     skipDuplicateMapOutputs: true) ~> OWNERSHIP"
+				"     skipDuplicateMapOutputs: true,",
+				"     partitionBy('hash', 1)) ~> OWNERSHIP"
 			]
 		}
 	}
