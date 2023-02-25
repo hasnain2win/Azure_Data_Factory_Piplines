@@ -1,0 +1,32 @@
+{
+	"name": "df_crif_dataflow",
+	"properties": {
+		"folder": {
+			"name": "df_flows"
+		},
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "ds_CRIF_data_input",
+						"type": "DatasetReference"
+					},
+					"name": "CRIF"
+				}
+			],
+			"sinks": [],
+			"transformations": [
+				{
+					"name": "aggregate1"
+				}
+			],
+			"scriptLines": [
+				"source(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false) ~> CRIF",
+				"CRIF aggregate() ~> aggregate1"
+			]
+		}
+	}
+}
