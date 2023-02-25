@@ -15,10 +15,18 @@
 					"name": "CRIF"
 				}
 			],
-			"sinks": [],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "ds_crif_output_json",
+						"type": "DatasetReference"
+					},
+					"name": "OWNERSHIP"
+				}
+			],
 			"transformations": [
 				{
-					"name": "aggregate1"
+					"name": "ByOWNERSHIPIND"
 				}
 			],
 			"scriptLines": [
@@ -62,7 +70,15 @@
 				"CRIF aggregate(groupBy({OWNERSHIP-IND}),",
 				"     TotalAmount = sum({DISBURSED-AMT}),",
 				"          MinAmount = min({DISBURSED-AMT}),",
-				"          MaxAmount = max({DISBURSED-AMT})) ~> aggregate1"
+				"          MaxAmount = max({DISBURSED-AMT}),",
+				"          AvrgAmount = avg({DISBURSED-AMT})) ~> ByOWNERSHIPIND",
+				"ByOWNERSHIPIND sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     umask: 0022,",
+				"     preCommands: [],",
+				"     postCommands: [],",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> OWNERSHIP"
 			]
 		}
 	}

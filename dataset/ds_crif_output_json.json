@@ -1,0 +1,20 @@
+{
+	"name": "ds_crif_output_json",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "LS_AzureDataLake_Gen_2",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "Json",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"fileName": "crif",
+				"folderPath": "CRIF",
+				"fileSystem": "hassu"
+			}
+		},
+		"schema": {}
+	}
+}
