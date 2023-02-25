@@ -18,15 +18,42 @@
 			"sinks": [
 				{
 					"dataset": {
-						"referenceName": "ds_crif_output_json",
+						"referenceName": "ds_crif_data_ouput",
 						"type": "DatasetReference"
 					},
-					"name": "OWNERSHIP"
+					"name": "Individual"
+				},
+				{
+					"dataset": {
+						"referenceName": "ds_crif_data_ouput",
+						"type": "DatasetReference"
+					},
+					"name": "Joint",
+					"rejectedDataLinkedService": {
+						"referenceName": "LS_AzureDataLake_Gen_2",
+						"type": "LinkedServiceReference"
+					}
+				},
+				{
+					"dataset": {
+						"referenceName": "ds_crif_data_ouput",
+						"type": "DatasetReference"
+					},
+					"name": "Guarantor"
 				}
 			],
 			"transformations": [
 				{
 					"name": "split1"
+				},
+				{
+					"name": "select1"
+				},
+				{
+					"name": "select2"
+				},
+				{
+					"name": "select3"
 				}
 			],
 			"scriptLines": [
@@ -71,15 +98,129 @@
 				"     {OWNERSHIP-IND}=='Joint',",
 				"     {OWNERSHIP-IND}=='Guarantor',",
 				"     disjoint: false) ~> split1@(Individual, Joint, Guarantor)",
-				"split1@Individual sink(allowSchemaDrift: true,",
+				"split1@Joint select(mapColumn(",
+				"          {CREDIT-GUARANTOR},",
+				"          {ACCT-TYPE},",
+				"          {DATE-REPORTED},",
+				"          {OWNERSHIP-IND},",
+				"          {ACCOUNT-STATUS},",
+				"          {DISBURSED-AMT},",
+				"          {DISBURSED-DT},",
+				"          {CLOSED-DATE},",
+				"          {INSTALLMENT-AMT},",
+				"          {WRITE-OFF-AMT},",
+				"          {CURRENT-BAL},",
+				"          {COMBINED-PAYMENT-HISTORY},",
+				"          {MATCHED-TYPE},",
+				"          {LINKED-ACCOUNTS},",
+				"          {PRINCIPAL-WRITE-OFF-AMT},",
+				"          {SECURITY-DETAILS},",
+				"          {SECURITY-DETAIL},",
+				"          {SECURITY-TYPE},",
+				"          {OWNER-NAME},",
+				"          {SECURITY-VALUE},",
+				"          {SECURITY-CHARGE},",
+				"          {PROPERTY-ADDRESS},",
+				"          {SETTLEMENT-AMT},",
+				"          {LAST-PAYMENT-DATE},",
+				"          {OVERDUE-AMT},",
+				"          {SUIT-FILED_WILFUL-DEFAULT},",
+				"          {WRITTEN-OFF_SETTLED-STATUS},",
+				"          {ACTUAL-PAYMENT}",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> select1",
+				"split1@Individual select(mapColumn(",
+				"          {CREDIT-GUARANTOR},",
+				"          {ACCT-TYPE},",
+				"          {DATE-REPORTED},",
+				"          {OWNERSHIP-IND},",
+				"          {ACCOUNT-STATUS},",
+				"          {DISBURSED-AMT},",
+				"          {DISBURSED-DT},",
+				"          {CLOSED-DATE},",
+				"          {INSTALLMENT-AMT},",
+				"          {WRITE-OFF-AMT},",
+				"          {CURRENT-BAL},",
+				"          {COMBINED-PAYMENT-HISTORY},",
+				"          {MATCHED-TYPE},",
+				"          {LINKED-ACCOUNTS},",
+				"          {PRINCIPAL-WRITE-OFF-AMT},",
+				"          {SECURITY-DETAILS},",
+				"          {SECURITY-DETAIL},",
+				"          {SECURITY-TYPE},",
+				"          {OWNER-NAME},",
+				"          {SECURITY-VALUE},",
+				"          {SECURITY-CHARGE},",
+				"          {PROPERTY-ADDRESS},",
+				"          {SETTLEMENT-AMT},",
+				"          {LAST-PAYMENT-DATE},",
+				"          {OVERDUE-AMT},",
+				"          {SUIT-FILED_WILFUL-DEFAULT},",
+				"          {WRITTEN-OFF_SETTLED-STATUS},",
+				"          {ACTUAL-PAYMENT}",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> select2",
+				"split1@Guarantor select(mapColumn(",
+				"          {CREDIT-GUARANTOR},",
+				"          {ACCT-TYPE},",
+				"          {DATE-REPORTED},",
+				"          {OWNERSHIP-IND},",
+				"          {ACCOUNT-STATUS},",
+				"          {DISBURSED-AMT},",
+				"          {DISBURSED-DT},",
+				"          {CLOSED-DATE},",
+				"          {INSTALLMENT-AMT},",
+				"          {WRITE-OFF-AMT},",
+				"          {CURRENT-BAL},",
+				"          {COMBINED-PAYMENT-HISTORY},",
+				"          {MATCHED-TYPE},",
+				"          {LINKED-ACCOUNTS},",
+				"          {PRINCIPAL-WRITE-OFF-AMT},",
+				"          {SECURITY-DETAILS},",
+				"          {SECURITY-DETAIL},",
+				"          {SECURITY-TYPE},",
+				"          {OWNER-NAME},",
+				"          {SECURITY-VALUE},",
+				"          {SECURITY-CHARGE},",
+				"          {PROPERTY-ADDRESS},",
+				"          {SETTLEMENT-AMT},",
+				"          {LAST-PAYMENT-DATE},",
+				"          {OVERDUE-AMT},",
+				"          {SUIT-FILED_WILFUL-DEFAULT},",
+				"          {WRITTEN-OFF_SETTLED-STATUS},",
+				"          {ACTUAL-PAYMENT}",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> select3",
+				"select2 sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
-				"     partitionFileNames:['crifFilteredData'],",
+				"     partitionFileNames:['Individual'],",
 				"     umask: 0022,",
 				"     preCommands: [],",
 				"     postCommands: [],",
 				"     skipDuplicateMapInputs: true,",
 				"     skipDuplicateMapOutputs: true,",
-				"     partitionBy('hash', 1)) ~> OWNERSHIP"
+				"     partitionBy('hash', 1)) ~> Individual",
+				"select1 sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     partitionFileNames:['Joint'],",
+				"     umask: 0022,",
+				"     preCommands: [],",
+				"     postCommands: [],",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     partitionBy('hash', 1)) ~> Joint",
+				"select3 sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     partitionFileNames:['Guarantor'],",
+				"     umask: 0022,",
+				"     preCommands: [],",
+				"     postCommands: [],",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     partitionBy('hash', 1)) ~> Guarantor"
 			]
 		}
 	}
