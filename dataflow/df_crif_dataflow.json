@@ -74,7 +74,7 @@
 				"          AvrgAmount = avg({DISBURSED-AMT})) ~> ByOWNERSHIPIND",
 				"ByOWNERSHIPIND sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
-				"     partitionFileNames:[''],",
+				"     partitionFileNames:['crifFilteredData'],",
 				"     umask: 0022,",
 				"     preCommands: [],",
 				"     postCommands: [],",
