@@ -16,12 +16,12 @@
 				"userProperties": [],
 				"typeProperties": {
 					"dataflow": {
-						"referenceName": "df_dataflow_movie",
+						"referenceName": "df_crif_dataflow",
 						"type": "DataFlowReference"
 					},
-					"integrationRuntime": {
-						"referenceName": "DataFlowintegrationRuntime",
-						"type": "IntegrationRuntimeReference"
+					"compute": {
+						"coreCount": 8,
+						"computeType": "General"
 					},
 					"traceLevel": "Coarse"
 				}
