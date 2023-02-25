@@ -1,0 +1,9 @@
+{
+	"name": "hassuADF",
+	"location": "eastus",
+	"identity": {
+		"type": "SystemAssigned",
+		"principalId": "2f1f164d-e0ae-4db7-bde4-323b19299d44",
+		"tenantId": "8de74780-c394-4c8f-b1a4-daf89b568c64"
+	}
+}
