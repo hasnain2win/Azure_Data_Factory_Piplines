@@ -1,0 +1,68 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"value": "hassuADF"
+		},
+		"AzureDataLakeStorage1_accountKey": {
+			"value": ""
+		},
+		"AzureSqlDatabase1_connectionString": {
+			"value": ""
+		},
+		"LS_AzureDataLake_Gen_2_accountKey": {
+			"value": ""
+		},
+		"LS_Azure_Blob_hassu_connectionString": {
+			"value": ""
+		},
+		"AzureBlobStorage1_properties_typeProperties_connectionString_secretName": {
+			"value": "azureblobStrogeKey"
+		},
+		"AzureDataLakeStorage1_properties_typeProperties_url": {
+			"value": "https://hasnain2gen2.dfs.core.windows.net/"
+		},
+		"LS_AzureBlobStorage_properties_typeProperties_connectionString_secretName": {
+			"value": "azureblobStrogeKey"
+		},
+		"LS_AzureDataLake_Gen_2_properties_typeProperties_url": {
+			"value": "https://hassugen2.dfs.core.windows.net/"
+		},
+		"LS_AzureKeyVault_properties_typeProperties_baseUrl": {
+			"value": "https://hasnainkeyvault.vault.azure.net/"
+		},
+		"LS_HttpConnection_properties_typeProperties_url": {
+			"value": "@{linkedService().baseURL}"
+		},
+		"MN_LS_AzureBlobStorage369_properties_privateLinkResourceId": {
+			"value": "/subscriptions/fbfddf6c-4cf9-4297-8169-dd687c9e780b/resourceGroups/hassuPR/providers/Microsoft.Storage/storageAccounts/hassublob"
+		},
+		"MN_LS_AzureBlobStorage369_properties_groupId": {
+			"value": "blob"
+		},
+		"Managed_private_endpointAzureDataLakeStorage_properties_privateLinkResourceId": {
+			"value": "/subscriptions/fbfddf6c-4cf9-4297-8169-dd687c9e780b/resourceGroups/hassuPR/providers/Microsoft.Storage/storageAccounts/hassugen2"
+		},
+		"Managed_private_endpointAzureDataLakeStorage_properties_groupId": {
+			"value": "dfs"
+		},
+		"mgprivateEndpoint_properties_privateLinkResourceId": {
+			"value": "/subscriptions/adc2a681-05ac-43c7-88b8-3e16517bb308/resourceGroups/hasnainPR/providers/Microsoft.Sql/servers/azuresqlserver001"
+		},
+		"mgprivateEndpoint_properties_groupId": {
+			"value": "sqlServer"
+		},
+		"mgprivateEndpoint_properties_fqdns": {
+			"value": [
+				"azuresqlserver001.database.windows.net"
+			]
+		},
+		"containerUri": {
+			"value": ""
+		},
+		"containerSasToken": {
+			"value": ""
+		}
+	}
+}

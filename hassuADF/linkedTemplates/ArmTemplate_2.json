@@ -1,0 +1,594 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "Data Factory name",
+			"defaultValue": "hassuADF"
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "[concat(parameters('factoryName'), '/df_dataflow_movie')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"folder": {
+					"name": "df_flows"
+				},
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "ds_movie_input",
+								"type": "DatasetReference"
+							},
+							"name": "faimlyMovie"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "ds_movie_output_csv",
+								"type": "DatasetReference"
+							},
+							"name": "movieSink"
+						}
+					],
+					"transformations": [
+						{
+							"name": "moviedata"
+						},
+						{
+							"name": "sortByRating"
+						},
+						{
+							"name": "filterByRating"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          movie_id as string,",
+						"          movie_name as string,",
+						"          year as string,",
+						"          certificate as string,",
+						"          runtime as string,",
+						"          genre as string,",
+						"          rating as double,",
+						"          description as string,",
+						"          director as string,",
+						"          director_id as string,",
+						"          star as string,",
+						"          star_id as string,",
+						"          votes as string,",
+						"          {gross(in $)} as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     inferDriftedColumnTypes: true,",
+						"     ignoreNoFilesFound: false) ~> faimlyMovie",
+						"faimlyMovie select(mapColumn(",
+						"          movie_id,",
+						"          movie_name,",
+						"          year,",
+						"          certificate,",
+						"          genre,",
+						"          rating,",
+						"          description,",
+						"          director,",
+						"          director_id,",
+						"          star,",
+						"          star_id,",
+						"          votes,",
+						"          {gross in USD} = {gross(in $)}",
+						"     ),",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> moviedata",
+						"filterByRating sort(asc(rating, false)) ~> sortByRating",
+						"moviedata filter(rating>=5) ~> filterByRating",
+						"sortByRating sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     partitionFileNames:['faimly_movie'],",
+						"     umask: 0022,",
+						"     preCommands: [],",
+						"     postCommands: [],",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     partitionBy('hash', 1),",
+						"     format: 'parquet') ~> movieSink"
+					]
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/df_dataflow_sales_data')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"folder": {
+					"name": "df_flows"
+				},
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "ds_df_sales_drive_inputs",
+								"type": "DatasetReference"
+							},
+							"name": "salesData"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "ds_output_sales_data_json",
+								"type": "DatasetReference"
+							},
+							"name": "sinkData"
+						}
+					],
+					"transformations": [
+						{
+							"name": "filterbasedonCountry"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          Order_id as short,",
+						"          Country as string,",
+						"          Year as short,",
+						"          Sales as short",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     inferDriftedColumnTypes: true,",
+						"     ignoreNoFilesFound: false) ~> salesData",
+						"salesData filter(Country=='IND' && Year>=2016) ~> filterbasedonCountry",
+						"filterbasedonCountry sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     umask: 0022,",
+						"     preCommands: [],",
+						"     postCommands: [],",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> sinkData"
+					]
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/PL_Blob_To_SQLDB')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Get files",
+						"type": "GetMetadata",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataset": {
+								"referenceName": "ds_Getfiles",
+								"type": "DatasetReference",
+								"parameters": {}
+							},
+							"fieldList": [
+								"childItems"
+							],
+							"storeSettings": {
+								"type": "AzureBlobStorageReadSettings",
+								"recursive": true,
+								"enablePartitionDiscovery": false
+							},
+							"formatSettings": {
+								"type": "DelimitedTextReadSettings"
+							}
+						}
+					},
+					{
+						"name": "Filter csv files",
+						"type": "Filter",
+						"dependsOn": [
+							{
+								"activity": "Get files",
+								"dependencyConditions": [
+									"Completed"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@activity('Get files').output.childItems",
+								"type": "Expression"
+							},
+							"condition": {
+								"value": "@endswith(item().name,'.csv' )",
+								"type": "Expression"
+							}
+						}
+					},
+					{
+						"name": "ForEach for getting file then write into DB",
+						"type": "ForEach",
+						"dependsOn": [
+							{
+								"activity": "Filter csv files",
+								"dependencyConditions": [
+									"Completed"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@activity('Filter csv files').output.value",
+								"type": "Expression"
+							},
+							"activities": [
+								{
+									"name": "Copy data from blob to azure DB",
+									"type": "Copy",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "DelimitedTextSource",
+											"storeSettings": {
+												"type": "AzureBlobStorageReadSettings",
+												"recursive": true,
+												"enablePartitionDiscovery": false
+											},
+											"formatSettings": {
+												"type": "DelimitedTextReadSettings"
+											}
+										},
+										"sink": {
+											"type": "AzureSqlSink",
+											"writeBehavior": "insert",
+											"sqlWriterUseTableLock": false,
+											"tableOption": "autoCreate",
+											"disableMetricsCollection": false
+										},
+										"enableStaging": false,
+										"translator": {
+											"type": "TabularTranslator",
+											"typeConversion": true,
+											"typeConversionSettings": {
+												"allowDataTruncation": true,
+												"treatBooleanAsNumber": false
+											}
+										}
+									},
+									"inputs": [
+										{
+											"referenceName": "ds_inputfile_for_sql",
+											"type": "DatasetReference",
+											"parameters": {
+												"sourceFileName": {
+													"value": "@item().name",
+													"type": "Expression"
+												}
+											}
+										}
+									],
+									"outputs": [
+										{
+											"referenceName": "ds_sqltable",
+											"type": "DatasetReference",
+											"parameters": {
+												"TableName": {
+													"value": "@substring(item().name,0,sub(length(item().name),4))",
+													"type": "Expression"
+												}
+											}
+										}
+									]
+								}
+							]
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {},
+					"cancelAfter": {}
+				},
+				"annotations": [],
+				"lastPublishTime": "2023-02-19T12:48:47Z"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/PL_SQLDB_TO_ADLFGen2')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Get tables from DB",
+						"type": "Lookup",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "AzureSqlSource",
+								"sqlReaderQuery": {
+									"value": "SELECT * FROM hasnain.INFORMATION_SCHEMA.TABLES WHERE table_type='BASE TABLE';",
+									"type": "Expression"
+								},
+								"queryTimeout": "02:00:00",
+								"partitionOption": "None"
+							},
+							"dataset": {
+								"referenceName": "AzureSqlTable1",
+								"type": "DatasetReference",
+								"parameters": {}
+							},
+							"firstRowOnly": false
+						}
+					},
+					{
+						"name": "ForEach for read tables name",
+						"type": "ForEach",
+						"dependsOn": [
+							{
+								"activity": "Get tables from DB",
+								"dependencyConditions": [
+									"Completed"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@activity('Get tables from DB').output.value",
+								"type": "Expression"
+							},
+							"activities": [
+								{
+									"name": "Copy data from SQL DB",
+									"type": "Copy",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "AzureSqlSource",
+											"queryTimeout": "02:00:00",
+											"partitionOption": "None"
+										},
+										"sink": {
+											"type": "DelimitedTextSink",
+											"storeSettings": {
+												"type": "AzureBlobFSWriteSettings"
+											},
+											"formatSettings": {
+												"type": "DelimitedTextWriteSettings",
+												"quoteAllText": true,
+												"fileExtension": ".txt"
+											}
+										},
+										"enableStaging": false,
+										"translator": {
+											"type": "TabularTranslator",
+											"typeConversion": true,
+											"typeConversionSettings": {
+												"allowDataTruncation": true,
+												"treatBooleanAsNumber": false
+											}
+										}
+									},
+									"inputs": [
+										{
+											"referenceName": "ds_inputsqltables",
+											"type": "DatasetReference",
+											"parameters": {
+												"tableName": {
+													"value": "@item().TABLE_NAME",
+													"type": "Expression"
+												},
+												"table_schema": {
+													"value": "@item().TABLE_SCHEMA",
+													"type": "Expression"
+												}
+											}
+										}
+									],
+									"outputs": [
+										{
+											"referenceName": "ds_outputFileFrom_sqlDB",
+											"type": "DatasetReference",
+											"parameters": {
+												"fileName": {
+													"value": "@concat(item().TABLE_SCHEMA,'_',item().TABLE_NAME,'.csv')",
+													"type": "Expression"
+												}
+											}
+										}
+									]
+								}
+							]
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {},
+					"cancelAfter": {}
+				},
+				"annotations": [],
+				"lastPublishTime": "2023-02-19T13:32:52Z"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/PL_run_data_flow')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Data flow for sales data",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "df_dataflow_movie",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"faimlyMovie": {},
+									"movieSink": {}
+								}
+							},
+							"staging": {},
+							"integrationRuntime": {
+								"referenceName": "DataFlowintegrationRuntime",
+								"type": "IntegrationRuntimeReference"
+							},
+							"traceLevel": "Coarse"
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {},
+					"cancelAfter": {}
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/dataflows/df_dataflow_movie')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/df_crif_dataflow')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"folder": {
+					"name": "df_flows"
+				},
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "ds_CRIF_data_input",
+								"type": "DatasetReference"
+							},
+							"name": "CRIF"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "ds_crif_output_json",
+								"type": "DatasetReference"
+							},
+							"name": "OWNERSHIP"
+						}
+					],
+					"transformations": [
+						{
+							"name": "ByOWNERSHIPIND"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          RESPONSES as string,",
+						"          RESPONSE as string,",
+						"          {LOAN-DETAILS} as string,",
+						"          {ACCT-NUMBER} as string,",
+						"          {CREDIT-GUARANTOR} as string,",
+						"          {ACCT-TYPE} as string,",
+						"          {DATE-REPORTED} as date,",
+						"          {OWNERSHIP-IND} as string,",
+						"          {ACCOUNT-STATUS} as string,",
+						"          {DISBURSED-AMT} as integer,",
+						"          {DISBURSED-DT} as date,",
+						"          {CLOSED-DATE} as date,",
+						"          {INSTALLMENT-AMT} as string,",
+						"          {WRITE-OFF-AMT} as boolean,",
+						"          {CURRENT-BAL} as integer,",
+						"          {COMBINED-PAYMENT-HISTORY} as string,",
+						"          {MATCHED-TYPE} as string,",
+						"          {LINKED-ACCOUNTS} as string,",
+						"          {PRINCIPAL-WRITE-OFF-AMT} as boolean,",
+						"          {SECURITY-DETAILS} as string,",
+						"          {SECURITY-DETAIL} as string,",
+						"          {SECURITY-TYPE} as string,",
+						"          {OWNER-NAME} as short,",
+						"          {SECURITY-VALUE} as integer,",
+						"          {SECURITY-CHARGE} as string,",
+						"          {PROPERTY-ADDRESS} as string,",
+						"          {SETTLEMENT-AMT} as boolean,",
+						"          {LAST-PAYMENT-DATE} as date,",
+						"          {OVERDUE-AMT} as boolean,",
+						"          {SUIT-FILED_WILFUL-DEFAULT} as string,",
+						"          {WRITTEN-OFF_SETTLED-STATUS} as string,",
+						"          {ACTUAL-PAYMENT} as integer",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false) ~> CRIF",
+						"CRIF aggregate(groupBy({OWNERSHIP-IND}),",
+						"     TotalAmount = sum({DISBURSED-AMT}),",
+						"          MinAmount = min({DISBURSED-AMT}),",
+						"          MaxAmount = max({DISBURSED-AMT}),",
+						"          AvrgAmount = avg({DISBURSED-AMT})) ~> ByOWNERSHIPIND",
+						"ByOWNERSHIPIND sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     umask: 0022,",
+						"     preCommands: [],",
+						"     postCommands: [],",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> OWNERSHIP"
+					]
+				}
+			},
+			"dependsOn": []
+		}
+	]
+}
