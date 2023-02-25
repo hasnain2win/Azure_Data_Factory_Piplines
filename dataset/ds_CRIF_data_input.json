@@ -1,0 +1,21 @@
+{
+	"name": "ds_CRIF_data_input",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "LS_Azure_Blob_hassu",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "Excel",
+		"typeProperties": {
+			"sheetName": "Sheet1",
+			"location": {
+				"type": "AzureBlobStorageLocation",
+				"fileName": "CRIF_Consumer_data.xlsx",
+				"container": "hassu"
+			},
+			"firstRowAsHeader": true
+		},
+		"schema": []
+	}
+}
