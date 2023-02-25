@@ -16,7 +16,7 @@
 				"userProperties": [],
 				"typeProperties": {
 					"dataflow": {
-						"referenceName": "df_crif_dataflow",
+						"referenceName": "df_crif_dataflow_split_data",
 						"type": "DataFlowReference"
 					},
 					"compute": {
