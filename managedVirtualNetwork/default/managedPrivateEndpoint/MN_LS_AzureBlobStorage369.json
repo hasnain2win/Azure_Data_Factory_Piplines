@@ -1,0 +1,7 @@
+{
+	"name": "MN_LS_AzureBlobStorage369",
+	"properties": {
+		"privateLinkResourceId": "/subscriptions/fbfddf6c-4cf9-4297-8169-dd687c9e780b/resourceGroups/hassuPR/providers/Microsoft.Storage/storageAccounts/hassublob",
+		"groupId": "blob"
+	}
+}
